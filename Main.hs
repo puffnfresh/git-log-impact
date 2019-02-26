@@ -5,7 +5,7 @@ import           Data.Foldable                 (for_)
 import           Data.List                     (scanl')
 import           Data.List.Split               (splitOn)
 import           Data.Maybe                    (mapMaybe)
-import           Graphics.Rendering.Chart.Easy (layout_title, line, plot, (.=))
+import           Graphics.Rendering.Chart.Easy
 import           Graphics.Rendering.Chart.Gtk  (toWindow)
 import           System.Environment            (getArgs)
 import           System.Process                (readProcess)
@@ -31,5 +31,7 @@ main = do
   stats <- traverse (\as -> (,) (unwords as) . parseStats <$> runGit as) args
   toWindow 500 200 $ do
     layout_title .= "Repository Impact"
+    layout_x_axis . laxis_title .= "Files"
+    layout_y_axis . laxis_title .= "Lines"
     for_ stats $ \(l, s) ->
       plot (line l [zip [(0::Int)..] s])
