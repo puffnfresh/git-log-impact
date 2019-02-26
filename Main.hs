@@ -31,7 +31,7 @@ main = do
   stats <- traverse (\as -> (,) (unwords as) . parseStats <$> runGit as) args
   toWindow 500 200 $ do
     layout_title .= "Repository Impact"
-    layout_x_axis . laxis_title .= "Files"
+    layout_x_axis . laxis_title .= "File edits"
     layout_y_axis . laxis_title .= "Lines"
     for_ stats $ \(l, s) ->
       plot (line l [zip [(0::Int)..] s])
