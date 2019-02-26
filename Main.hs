@@ -1,7 +1,9 @@
 module Main where
 
 import           Control.Applicative           (liftA2)
+import           Data.Foldable                 (for_)
 import           Data.List                     (scanl')
+import           Data.List.Split               (splitOn)
 import           Data.Maybe                    (mapMaybe)
 import           Graphics.Rendering.Chart.Easy (layout_title, line, plot, (.=))
 import           Graphics.Rendering.Chart.Gtk  (toWindow)
@@ -15,12 +17,19 @@ numStat (a:b:_) =
 numStat _ =
   Nothing
 
+runGit :: [String] -> IO String
+runGit args =
+  readProcess "git" (["log", "--format=", "--numstat", "--reverse"] ++ args) ""
+
+parseStats :: String -> [Int]
+parseStats = do
+  scanl' (flip ((+) . uncurry (-))) 0  . mapMaybe (numStat . words) . lines
+
 main :: IO ()
 main = do
-  args <- getArgs
-  result <- readProcess "git" (["log", "--format=", "--numstat", "--reverse"] ++ args) ""
-  let numStats = mapMaybe (numStat . words) (lines result)
-      netStats = scanl' (flip ((+) . uncurry (-))) 0 numStats
+  args <- splitOn ["--"] <$> getArgs
+  stats <- traverse (\as -> (,) (unwords as) . parseStats <$> runGit as) args
   toWindow 500 200 $ do
     layout_title .= "Repository Impact"
-    plot (line "lines" [zip [(0::Int)..] netStats])
+    for_ stats $ \(l, s) ->
+      plot (line l [zip [(0::Int)..] s])
